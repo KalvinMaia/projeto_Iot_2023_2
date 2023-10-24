@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <PubSubClient.h>
 
 const char* ssid = "SSID";      // Nome da rede Wi-Fi
 const char* password = "SENHA";  // Senha da rede Wi-Fi
@@ -25,9 +26,26 @@ void setup() {
   }
 
   Serial.println("");
-  Serial.println("Conectado ao WiFi");
+  Serial.println("Connected to WiFi");
   Serial.print("Endereço IP: ");
   Serial.println(WiFi.localIP());
+
+ // Conectar ao broker MQTT
+  client.setServer(mqtt_server, mqtt_port);
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Tentando conectar ao MQTT...");
+    if (client.connect("ESP32Client")) {
+      Serial.println("connected");
+    } else {
+      Serial.print("Falhou, rc=");
+      Serial.print(client.state());
+      Serial.println(" tente novamente em 5 segundos");
+      delay(5000);
+    }
+  }
 }
 
 void loop() {
