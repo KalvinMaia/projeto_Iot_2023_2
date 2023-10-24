@@ -6,7 +6,7 @@
 WiFiClient wifi_client;
 PubSubClient mqtt_client(wifi_client);
 
-const int sensorVib = 15;
+const int sensorVib = 34;
 const int sensorTemp = 4;
 
 DHT dht(sensorTemp, DHT11);
@@ -28,7 +28,7 @@ void setup() {
   Serial.begin(115200);
   WiFi.mode(WIFI_STA); //"station mode": permite o ESP32 ser um cliente da rede WiFi
   WiFi.begin(wifi_ssid, wifi_password);
-  connectWiFi();
+  //connectWiFi();
   mqtt_client.setServer(mqtt_broker, mqtt_port);
 
   dht.begin();
@@ -37,9 +37,9 @@ void setup() {
 }
 
 void loop() {
-  float sensorValue = digitalRead(sensorVib);
+  float sensorValue = analogRead(sensorVib);
   Serial.println("Vibracao: "); // (mm/s) = sensorValue*1mV/3300mV
-  Serial.println(sensorValue/3300); // (mm/s) = sensorValue*1mV/3300mV
+  Serial.println(sensorValue); // (mm/s) = sensorValue*1mV/3300mV
   Serial.println("Umidade: ");
   Serial.println(dht.readHumidity());
   Serial.println("Temperatura: ");
