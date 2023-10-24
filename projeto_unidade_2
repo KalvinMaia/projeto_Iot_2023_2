@@ -1,53 +1,104 @@
 #include <WiFi.h>
+#include <WiFiClient.h>
 #include <PubSubClient.h>
+#include <DHT.h>
 
-const char* ssid = "SSID";      // Nome da rede Wi-Fi
-const char* password = "SENHA";  // Senha da rede Wi-Fi
-const char* mqtt_server = "broker.hivemq.com"; // Broker público MQTT HiveMQ
-const int mqtt_port = 1883;  
+WiFiClient wifi_client;
+PubSubClient mqtt_client(wifi_client);
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+const int sensorVib = 15;
+const int sensorTemp = 4;
+
+DHT dht(sensorTemp, DHT11);
+
+const char* wifi_ssid = "NPITI-IoT";
+const char* wifi_password = "NPITI-IoT";
+int wifi_timeout = 100000;
+
+const char* mqtt_broker = "io.adafruit.com";
+const int mqtt_port = 1883;
+int mqtt_timeout = 10000;
+
+const char* mqtt_usernameAdafruitIO = "KalvinMaia10";
+const char* mqtt_keyAdafruitIO = "aio_DoWb12tvUu7bcr9kmlSgALzYaIiQ";
+
+int valor = 0;
 
 void setup() {
   Serial.begin(115200);
-  delay(10);
-  
-  // Conectar ao Wi-Fi
-  Serial.println();
-  Serial.print("Conectando ao ");
-  Serial.println(ssid);
+  WiFi.mode(WIFI_STA); //"station mode": permite o ESP32 ser um cliente da rede WiFi
+  WiFi.begin(wifi_ssid, wifi_password);
+  connectWiFi();
+  mqtt_client.setServer(mqtt_broker, mqtt_port);
 
-  WiFi.begin(ssid, password);
+  dht.begin();
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("Connected to WiFi");
-  Serial.print("Endereço IP: ");
-  Serial.println(WiFi.localIP());
-
- // Conectar ao broker MQTT
-  client.setServer(mqtt_server, mqtt_port);
-}
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Tentando conectar ao MQTT...");
-    if (client.connect("ESP32Client")) {
-      Serial.println("connected");
-    } else {
-      Serial.print("Falhou, rc=");
-      Serial.print(client.state());
-      Serial.println(" tente novamente em 5 segundos");
-      delay(5000);
-    }
-  }
+  pinMode(sensorVib, INPUT);
 }
 
 void loop() {
-  // Nosso código entra aqui!
+  float sensorValue = digitalRead(sensorVib);
+  Serial.println("Vibracao: "); // (mm/s) = sensorValue*1mV/3300mV
+  Serial.println(sensorValue/3300); // (mm/s) = sensorValue*1mV/3300mV
+  Serial.println("Umidade: ");
+  Serial.println(dht.readHumidity());
+  Serial.println("Temperatura: ");
+  Serial.println(dht.readTemperature());
+  delay(500);
+  
+  /*if (!mqtt_client.connected()) { // Se MQTT não estiver conectado
+    connectMQTT();
+  }
+
+  if (mqtt_client.connected()) {
+    valor = random(1, 100);
+     
+    mqtt_client.publish("KalvinMaia10/feeds/imd0902", String(valor).c_str());
+    Serial.println("Publicou o dado: " + String(valor));
+    delay(10000);
+    mqtt_client.loop();
+
+    //mqtt_client.publish("KalvinMaia10/feeds/imd0903", String(valor).c_str());
+    //Serial.println("Publicou o dado: " + float);
+    //delay(10000);
+    //mqtt_client.loop();
+  }*/
+}
+
+void connectWiFi() {
+  Serial.print("Conectando à rede WiFi .. ");
+
+  unsigned long tempoInicial = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - tempoInicial < wifi_timeout)) {
+    Serial.print(".");
+    delay(100);
+  }
+  Serial.println();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Conexão com WiFi falhou!");
+  } else {
+    Serial.print("Conectado com o IP: ");
+    Serial.println(WiFi.localIP());
+  }
+}
+
+void connectMQTT() {
+  unsigned long tempoInicial = millis();
+  while (!mqtt_client.connected() && (millis() - tempoInicial < mqtt_timeout)) {
+    if (WiFi.status() != WL_CONNECTED) {
+      connectWiFi();
+    }
+    Serial.print("Conectando ao MQTT Broker..");
+
+    if (mqtt_client.connect("ESP32Client", mqtt_usernameAdafruitIO, mqtt_keyAdafruitIO)) {
+      Serial.println();
+      Serial.print("Conectado ao broker MQTT!");
+    } else {
+      Serial.println();
+      Serial.print("Conexão com o broker MQTT falhou!");
+      delay(500);
+    }
+  }
+  Serial.println();
 }
