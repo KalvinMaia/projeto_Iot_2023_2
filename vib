@@ -1,0 +1,17 @@
+
+const int sensorVib = 34;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(sensorVib, INPUT);
+}
+
+void loop() {
+  float sensorValue = analogRead(sensorVib);
+  Serial.println("Vibracao: "); // (mm/s) = sensorValue*1mV/3300mV
+  Serial.println(sensorValue); // (mm/s) = sensorValue*1mV/3300mV
+  
+  delay(100);
+
+}
