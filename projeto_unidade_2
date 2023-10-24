@@ -1,1 +1,35 @@
+#include <WiFi.h>
 
+const char* ssid = "SSID";      // Nome da rede Wi-Fi
+const char* password = "SENHA";  // Senha da rede Wi-Fi
+const char* mqtt_server = "broker.hivemq.com"; // Broker público MQTT HiveMQ
+const int mqtt_port = 1883;  
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void setup() {
+  Serial.begin(115200);
+  delay(10);
+  
+  // Conectar ao Wi-Fi
+  Serial.println();
+  Serial.print("Conectando ao ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("Conectado ao WiFi");
+  Serial.print("Endereço IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  // Nosso código entra aqui!
+}
