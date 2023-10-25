@@ -1,4 +1,3 @@
-
 const int sensorVib = 34;
 
 void setup() {
