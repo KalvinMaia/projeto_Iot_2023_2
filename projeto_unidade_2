@@ -8,11 +8,12 @@ PubSubClient mqtt_client(wifi_client);
 
 const int sensorVib = 34;
 const int sensorTemp = 4;
+const int led = 2;
 
 DHT dht(sensorTemp, DHT11);
 
-const char* wifi_ssid = "NPITI-IoT";
-const char* wifi_password = "NPITI-IoT";
+const char* wifi_ssid = "IoT23-2";
+const char* wifi_password = "testeIoT1";
 int wifi_timeout = 100000;
 
 const char* mqtt_broker = "io.adafruit.com";
@@ -20,7 +21,7 @@ const int mqtt_port = 1883;
 int mqtt_timeout = 10000;
 
 const char* mqtt_usernameAdafruitIO = "KalvinMaia10";
-const char* mqtt_keyAdafruitIO = "aio_DoWb12tvUu7bcr9kmlSgALzYaIiQ";
+const char* mqtt_keyAdafruitIO = "aio_zSdj96TZkOtMRWZLunQBUGwqJLxS";
 
 int valor = 0;
 
@@ -28,41 +29,53 @@ void setup() {
   Serial.begin(115200);
   WiFi.mode(WIFI_STA); //"station mode": permite o ESP32 ser um cliente da rede WiFi
   WiFi.begin(wifi_ssid, wifi_password);
-  //connectWiFi();
+  connectWiFi();
   mqtt_client.setServer(mqtt_broker, mqtt_port);
 
   dht.begin();
 
   pinMode(sensorVib, INPUT);
+  pinMode(led, OUTPUT);
+
 }
 
 void loop() {
-  float sensorValue = analogRead(sensorVib);
+  int sensorValue = digitalRead(sensorVib);
+  float temperatura = dht.readTemperature();
+  int umidade = dht.readHumidity();
+  
   Serial.println("Vibracao: "); // (mm/s) = sensorValue*1mV/3300mV
   Serial.println(sensorValue); // (mm/s) = sensorValue*1mV/3300mV
   Serial.println("Umidade: ");
   Serial.println(dht.readHumidity());
   Serial.println("Temperatura: ");
   Serial.println(dht.readTemperature());
-  delay(500);
   
-  /*if (!mqtt_client.connected()) { // Se MQTT não estiver conectado
+  
+  if (!mqtt_client.connected()) { // Se MQTT não estiver conectado
     connectMQTT();
   }
 
   if (mqtt_client.connected()) {
-    valor = random(1, 100);
+    
      
-    mqtt_client.publish("KalvinMaia10/feeds/imd0902", String(valor).c_str());
-    Serial.println("Publicou o dado: " + String(valor));
-    delay(10000);
+    mqtt_client.publish("KalvinMaia10/feeds/imd0902", String(temperatura).c_str());
+    Serial.println("Publicou o dado: " + String(temperatura));
+    
     mqtt_client.loop();
 
-    //mqtt_client.publish("KalvinMaia10/feeds/imd0903", String(valor).c_str());
-    //Serial.println("Publicou o dado: " + float);
-    //delay(10000);
-    //mqtt_client.loop();
-  }*/
+    mqtt_client.publish("KalvinMaia10/feeds/imd0903", String(umidade).c_str());
+    Serial.println("Publicou o dado: " + String(umidade));
+    
+    mqtt_client.loop();
+
+    mqtt_client.publish("KalvinMaia10/feeds/vibracao", String(sensorValue).c_str());
+    Serial.println("Publicou o dado: " + String(sensorValue));
+    
+    mqtt_client.loop();
+    delay(10000);
+  }
+  delay(500);
 }
 
 void connectWiFi() {
@@ -80,6 +93,7 @@ void connectWiFi() {
   } else {
     Serial.print("Conectado com o IP: ");
     Serial.println(WiFi.localIP());
+    digitalWrite(led, HIGH);
   }
 }
 
